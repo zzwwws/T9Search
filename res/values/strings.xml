@@ -1,0 +1,8 @@
+<resources>
+
+    <string name="app_name">T9Search</string>
+    <string name="display_keyboard">显示键盘</string>
+    <string name="hide_keyboard">隐藏键盘</string>
+    <string name="input_phone_number">请输入电话号码</string>
+
+</resources>
