@@ -6,24 +6,41 @@ import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ListView;
+import android.widget.TextView;
+import android.widget.Toast;
 
 import com.handsomezhou.t9search.R;
-import com.handsomezhou.t9search.View.T9TelephoneDialpadView;
-import com.handsomezhou.t9search.View.T9TelephoneDialpadView.OnT9TelephoneDialpadView;
+import com.handsomezhou.t9search.adapter.ContactsAdapter;
+import com.handsomezhou.t9search.util.ContactsHelper;
+import com.handsomezhou.t9search.util.ContactsHelper.OnContactsLoad;
+import com.handsomezhou.t9search.view.T9TelephoneDialpadView;
+import com.handsomezhou.t9search.view.T9TelephoneDialpadView.OnT9TelephoneDialpadView;
 
-public class MainActivity extends Activity implements OnT9TelephoneDialpadView{
+/**
+ * @description Main activity
+ * @author handsomezhou
+ * @date 2014.11.09
+ */
+public class MainActivity extends Activity implements OnT9TelephoneDialpadView,
+		OnContactsLoad {
+	private static final int DIAL_INPUT_INIT_CAPACITY=128;
 	private Context mContext;
 	private ListView mContactsLv;
-	private  T9TelephoneDialpadView mT9TelephoneDialpadView;
+	private View mLoadContactsView;
+	private TextView mSearchResultPromptTv;
+	private T9TelephoneDialpadView mT9TelephoneDialpadView;
 	private Button mDialpadOperationBtn;
+	
+	private ContactsAdapter mContactsAdapter;
+	private StringBuffer mDialInputStr;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_main);
-		mContext=this;
-		initData();
+		mContext = this;
 		initView();
+		initData();
 		initListener();
 	}
 
@@ -32,18 +49,31 @@ public class MainActivity extends Activity implements OnT9TelephoneDialpadView{
 		super.onDestroy();
 	}
 
-	private void initData() {
-
-	}
-
 	private void initView() {
-		mContactsLv=(ListView) findViewById(R.id.contacts_list_view);
-		mT9TelephoneDialpadView=(T9TelephoneDialpadView) findViewById(R.id.t9_telephone_dialpad_layout);
+		mContactsLv = (ListView) findViewById(R.id.contacts_list_view);
+		mLoadContactsView=findViewById(R.id.load_contacts);
+		mSearchResultPromptTv=(TextView) findViewById(R.id.search_result_prompt_text_view);
+		mT9TelephoneDialpadView = (T9TelephoneDialpadView) findViewById(R.id.t9_telephone_dialpad_layout);
 		mT9TelephoneDialpadView.setOnT9TelephoneDialpadView(this);
 
 		mDialpadOperationBtn = (Button) findViewById(R.id.dialpad_operation_btn);
 		mDialpadOperationBtn.setText(R.string.hide_keyboard);
+		
+		showView(mContactsLv);
+		hideView(mLoadContactsView);
+		hideView(mSearchResultPromptTv);
 
+	}
+
+	private void initData() {
+		ContactsHelper.getInstance().setOnContactsLoad(this);
+		boolean startLoad = ContactsHelper.getInstance().startLoadContacts(mContext);
+		if (true == startLoad) {
+			showView(mLoadContactsView);
+		}
+		mContactsAdapter=new ContactsAdapter(mContext, R.layout.contacts_list_item, ContactsHelper.getInstance().getBaseContacts());
+		mContactsLv.setAdapter(mContactsAdapter);
+		mDialInputStr=new StringBuffer(DIAL_INPUT_INIT_CAPACITY);
 	}
 
 	private void initListener() {
@@ -68,17 +98,70 @@ public class MainActivity extends Activity implements OnT9TelephoneDialpadView{
 
 	@Override
 	public void onAddDialCharacter(String addCharacter) {
-		//Toast.makeText(mContext, "onAddDialCharacter"+"("+addCharacter+")", Toast.LENGTH_SHORT).show();
+		// Toast.makeText(mContext, "onAddDialCharacter"+"("+addCharacter+")",
+		// Toast.LENGTH_SHORT).show();
 	}
 
 	@Override
 	public void onDeleteDialCharacter(String deleteCharacter) {
-		//Toast.makeText(mContext, "onDeleteDialCharacter"+"("+deleteCharacter+")", Toast.LENGTH_SHORT).show();
+		// Toast.makeText(mContext,
+		// "onDeleteDialCharacter"+"("+deleteCharacter+")",
+		// Toast.LENGTH_SHORT).show();
 	}
 
 	@Override
 	public void onDialInputTextChanged(String curCharacter) {
-		//Toast.makeText(mContext, "onDialInputTextChanged"+"("+curCharacter+")", Toast.LENGTH_SHORT).show();
+		// Toast.makeText(mContext,
+		// "onDialInputTextChanged"+"("+curCharacter+")",
+		// Toast.LENGTH_SHORT).show();
+		mDialInputStr.delete(0,mDialInputStr.length());
+		mDialInputStr.append(curCharacter);
 		
+		 Toast.makeText(mContext,
+				"onDialInputTextChanged"+"("+mDialInputStr.toString()+")",
+				 Toast.LENGTH_SHORT).show();
 	}
+
+	@Override
+	public void onContactsLoadSuccess() {
+		hideView(mLoadContactsView);
+		showView(mContactsLv);
+	}
+
+	@Override
+	public void onContactsLoadFailed() {
+	
+		hideView(mLoadContactsView);
+		showView(mContactsLv);
+	}
+	
+	private void hideView(View view){
+		if(null==view){
+			return;
+		}
+		if(View.GONE!=view.getVisibility()){
+			view.setVisibility(View.GONE);
+		}
+		
+		return;
+	}
+	
+	private int getViewVisibility(View view){
+		if(null==view){
+			return View.GONE;
+		}
+		
+		return view.getVisibility();
+	}
+	
+	private void showView(View view){
+		if(null==view){
+			return;
+		}
+		
+		if(View.VISIBLE!=view.getVisibility()){
+			view.setVisibility(View.VISIBLE);
+		}
+	}
+	
 }

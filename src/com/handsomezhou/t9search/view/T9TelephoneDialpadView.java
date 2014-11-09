@@ -1,4 +1,4 @@
-package com.handsomezhou.t9search.View;
+package com.handsomezhou.t9search.view;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
@@ -53,7 +53,7 @@ public class T9TelephoneDialpadView extends LinearLayout implements
 		initView();
 		initData();
 		initListener();
-	
+
 	}
 
 	private void initData() {
@@ -72,7 +72,7 @@ public class T9TelephoneDialpadView extends LinearLayout implements
 				.findViewById(R.id.dial_delete_btn);
 		mDialInputEt = (EditText) mDialpadView
 				.findViewById(R.id.dial_input_edit_text);
-		
+
 	}
 
 	private void initListener() {
@@ -86,9 +86,9 @@ public class T9TelephoneDialpadView extends LinearLayout implements
 				return true;
 			}
 		});
-		
+
 		/**
-		 * 为"0-9",'*','#' 设置监听
+		 * 涓�0-9",'*','#' 璁剧疆鐩戝惉
 		 */
 		for (int i = 0; i < 12; i++) {
 			View v = mDialpadView.findViewById(R.id.dialNum1 + i);
@@ -117,19 +117,20 @@ public class T9TelephoneDialpadView extends LinearLayout implements
 					mOnT9TelephoneDialpadView.onDialInputTextChanged(s
 							.toString());
 					mDialInputEt.setSelection(s.toString().length());
-//					Toast.makeText(mContext,
-//							"onDialInputTextChanged[" + s.toString() + "]",
-//							Toast.LENGTH_SHORT).show();
+					// Toast.makeText(mContext,
+					// "onDialInputTextChanged[" + s.toString() + "]",
+					// Toast.LENGTH_SHORT).show();
 				}
 			}
 		});
-		
+
 		mDialInputEt.setOnTouchListener(new OnTouchListener() {
-			
+
 			@SuppressLint("ClickableViewAccessibility")
 			@Override
 			public boolean onTouch(View v, MotionEvent event) {
-				//In order to prevent the soft keyboard pops up,but also can not make EditText get focus.
+				// In order to prevent the soft keyboard pops up,but also can
+				// not make EditText get focus.
 				return true; // the listener has consumed the event
 			}
 		});
