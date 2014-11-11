@@ -121,6 +121,8 @@ public class ContactsHelper {
 								.getColumnIndex(ContactsContract.CommonDataKinds.Phone.NUMBER));
 				
 				cs = new Contacts(displayName, phoneNumber);
+				PinyinUtil.chineseStringToPinyinUnit(cs.getName(), cs.getNamePinyinUnits());
+				
 				contacts.add(cs);
 			}
 		} catch (Exception e) {
