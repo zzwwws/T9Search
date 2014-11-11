@@ -1,6 +1,5 @@
 package com.handsomezhou.t9search.util;
 
-import java.text.Format;
 import java.util.List;
 
 import net.sourceforge.pinyin4j.PinyinHelper;
@@ -30,7 +29,7 @@ public class PinyinUtil {
 			format = new HanyuPinyinOutputFormat();
 		}
 		
-		//format.setToneType(HanyuPinyinToneType.WITHOUT_TONE);
+		format.setToneType(HanyuPinyinToneType.WITHOUT_TONE);
 
 		int chineseStringLength = chineseString.length();
 		StringBuffer nonPinyinString = new StringBuffer();
@@ -98,11 +97,31 @@ public class PinyinUtil {
 		if ((null == pinyinUnit) || (null == string)) {
 			return;
 		}
+		int i=0;
+		int j=0; 
+		int k=0;
 		int strLength = string.length;
 		pinyinUnit.setPinyin(pinyin);
+		
 
-		for (int i = 0; i < strLength; i++) {
-			pinyinUnit.getStringIndex().add(new String(string[i]));
+		if(false==pinyin||strLength<=1){// no more than one pinyin
+			for (i = 0; i < strLength; i++) {
+				pinyinUnit.getStringIndex().add(new String(string[i]));
+			}
+		}else{ //more than one pinyin.//we must delete the same pinyin string,because pinyin without tone.
+			pinyinUnit.getStringIndex().add(new String(string[0]));
+			for( j=1; j<strLength; j++){
+				int curStringIndexlength=pinyinUnit.getStringIndex().size();
+				for( k=0; k<curStringIndexlength; k++){
+					if(pinyinUnit.getStringIndex().get(k).equals(string[j])){
+						break;
+					}
+				}
+				
+				if(k==curStringIndexlength){
+					pinyinUnit.getStringIndex().add(new String(string[j]));
+				}
+			}
 		}
 	}
 }

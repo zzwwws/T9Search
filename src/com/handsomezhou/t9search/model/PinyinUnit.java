@@ -7,13 +7,13 @@ import java.util.List;
  * @description PinyinUnit as a base data structure to save the string that Chinese characters  converted to Pinyin characters.
  * for example:
  * Reference: http://www.cnblogs.com/bomo/archive/2012/12/25/2833081.html
- * Chinese characters:"��˵��ʲô???"
+ * Chinese characters:"你说了什么???"
  * Pinyin:
- * 		��->ni3					===>mPinyin=true, 	mStringIndex.size=1,	mStringIndex[0]="ni";
- *      ˵->shuo1,shui4,yue4 	===>mPinyin=true,	mStringIndex.size=3,	mStringIndex[0]="shuo",mStringIndex[1]="shui",mStringIndex[2]="yue",
- *      ��->le5,liao3,liao4  	===>mPinyin=true, 	mStringIndex.size=2,	mStringIndex[0]="le",mStringIndex[1]="liao";
- * 		ʲ->shen2,shi2,she2		===>mPinyin=true, 	mStringIndex.size=3,	mStringIndex[0]="shen",mStringIndex[1]="shi",mStringIndex[2]="she",
- * 		ô->me5,ma5,yao1			===>mPinyin=true,	mStringIndex.size=4,	mStringIndex[0]="me",mStringIndex[1]="ma",mStringIndex[2]="yao",
+ * 		你->ni3					===>mPinyin=true, 	mStringIndex.size=1,	mStringIndex[0]="ni";
+ *     	说->shuo1,shui4,yue4 	===>mPinyin=true,	mStringIndex.size=3,	mStringIndex[0]="shuo",mStringIndex[1]="shui",mStringIndex[2]="yue",
+ *      了->le5,liao3,liao4  	===>mPinyin=true, 	mStringIndex.size=2,	mStringIndex[0]="le",mStringIndex[1]="liao";
+ * 		什->shen2,shi2,she2		===>mPinyin=true, 	mStringIndex.size=3,	mStringIndex[0]="shen",mStringIndex[1]="shi",mStringIndex[2]="she",
+ * 		么->me5,ma5,yao1			===>mPinyin=true,	mStringIndex.size=4,	mStringIndex[0]="me",mStringIndex[1]="ma",mStringIndex[2]="yao",
  * 		???->???				===>mPinyin=false, 	mStringIndex.size=1,	mStringIndex[0]="???";
  * @author handsomezhou
  * @date 2014-11-11
