@@ -8,6 +8,7 @@ import net.sourceforge.pinyin4j.format.HanyuPinyinToneType;
 import net.sourceforge.pinyin4j.format.exception.BadHanyuPinyinOutputFormatCombination;
 
 import com.handsomezhou.t9search.model.PinyinUnit;
+import com.handsomezhou.t9search.model.T9PinyinUnit;
 
 public class PinyinUtil {
 	// init Pinyin Output Format
@@ -103,25 +104,54 @@ public class PinyinUtil {
 		int strLength = string.length;
 		pinyinUnit.setPinyin(pinyin);
 		
+		T9PinyinUnit t9PinyinUnit=null;
 
 		if(false==pinyin||strLength<=1){// no more than one pinyin
 			for (i = 0; i < strLength; i++) {
-				pinyinUnit.getStringIndex().add(new String(string[i]));
+				t9PinyinUnit=new T9PinyinUnit();
+				initT9PinyinUnit(t9PinyinUnit,string[i]);
+				pinyinUnit.getT9PinyinUnitIndex().add(t9PinyinUnit);
 			}
 		}else{ //more than one pinyin.//we must delete the same pinyin string,because pinyin without tone.
-			pinyinUnit.getStringIndex().add(new String(string[0]));
+			
+			t9PinyinUnit=new T9PinyinUnit();
+			initT9PinyinUnit(t9PinyinUnit, string[0]);
+			pinyinUnit.getT9PinyinUnitIndex().add(t9PinyinUnit);
 			for( j=1; j<strLength; j++){
-				int curStringIndexlength=pinyinUnit.getStringIndex().size();
+				int curStringIndexlength=pinyinUnit.getT9PinyinUnitIndex().size();
 				for( k=0; k<curStringIndexlength; k++){
-					if(pinyinUnit.getStringIndex().get(k).equals(string[j])){
+					if(pinyinUnit.getT9PinyinUnitIndex().get(k).getPinyin().equals(string[j])){
 						break;
 					}
 				}
 				
 				if(k==curStringIndexlength){
-					pinyinUnit.getStringIndex().add(new String(string[j]));
+					t9PinyinUnit=new T9PinyinUnit();
+					initT9PinyinUnit(t9PinyinUnit, string[j]);
+					pinyinUnit.getT9PinyinUnitIndex().add(t9PinyinUnit);
 				}
 			}
 		}
+	}
+	
+	private static void initT9PinyinUnit(T9PinyinUnit t9PinyinUnit,String pinyin){
+		if((null==t9PinyinUnit)||(null==pinyin)){
+			return;
+		}
+		
+		t9PinyinUnit.setPinyin(new String(pinyin));
+		int pinyinLength=pinyin.length();
+		StringBuffer numBuffer=new StringBuffer();
+		numBuffer.delete(0, numBuffer.length());
+		
+		for(int i=0; i<pinyinLength; i++){
+			char ch=T9Util.getT9Number(pinyin.charAt(i));
+			numBuffer.append(ch);
+		}
+		
+		t9PinyinUnit.setNumber(new String(numBuffer.toString()));
+		numBuffer.delete(0, numBuffer.length());
+		
+		return;
 	}
 }

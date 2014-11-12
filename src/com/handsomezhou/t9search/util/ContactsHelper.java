@@ -259,6 +259,16 @@ public class ContactsHelper {
 	}
 	
 	private boolean matchPinyinUnits(final List<PinyinUnit> pinyinUnits, String search){
+		if((null==pinyinUnits)||(null==search)){
+			return false;
+		}
+		StringBuffer matchSearch=new StringBuffer();
+		matchSearch.delete(0, matchSearch.length());
+		
+		int pinyinUnitsLength=pinyinUnits.size();
+		for(int i=0; i<pinyinUnitsLength; i++){
+			
+		}
 		
 		return false;
 	}

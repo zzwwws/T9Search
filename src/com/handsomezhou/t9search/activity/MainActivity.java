@@ -17,6 +17,7 @@ import android.widget.Toast;
 import com.handsomezhou.t9search.R;
 import com.handsomezhou.t9search.adapter.ContactsAdapter;
 import com.handsomezhou.t9search.model.PinyinUnit;
+import com.handsomezhou.t9search.model.T9PinyinUnit;
 import com.handsomezhou.t9search.util.ContactsHelper;
 import com.handsomezhou.t9search.util.ContactsHelper.OnContactsLoad;
 import com.handsomezhou.t9search.view.T9TelephoneDialpadView;
@@ -56,6 +57,11 @@ public class MainActivity extends Activity implements OnT9TelephoneDialpadView,
 		super.onDestroy();
 	}
 
+	@Override
+	public void onBackPressed() {
+		moveTaskToBack(true);
+	}
+	
 	private void initView() {
 		mContactsLv = (ListView) findViewById(R.id.contacts_list_view);
 		mLoadContactsView = findViewById(R.id.load_contacts);
@@ -152,10 +158,10 @@ public class MainActivity extends Activity implements OnT9TelephoneDialpadView,
 			for(int j=0; j<pinyinUnitCount; j++){
 				PinyinUnit pyUnit=pinyinUnit.get(j);
 				Log.i(TAG,"j="+j+",isPinyin["+pyUnit.isPinyin()+"]" );
-				List<String> stringIndex=pyUnit.getStringIndex();
+				List<T9PinyinUnit> stringIndex=pyUnit.getT9PinyinUnitIndex();
 				int stringIndexLength=stringIndex.size();
 				for(int k=0; k<stringIndexLength; k++){
-					Log.i(TAG,"k="+k+"["+stringIndex.get(k)+"]" );
+					Log.i(TAG,"k="+k+"["+stringIndex.get(k).getPinyin()+"]+["+stringIndex.get(k).getNumber()+"]" );
 				}
 				
 			}
