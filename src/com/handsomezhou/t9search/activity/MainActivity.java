@@ -5,8 +5,10 @@ import java.util.List;
 import android.app.Activity;
 import android.content.Context;
 import android.os.Bundle;
+import android.text.TextUtils;
 import android.util.Log;
 import android.view.View;
+import android.widget.BaseAdapter;
 import android.widget.Button;
 import android.widget.ListView;
 import android.widget.TextView;
@@ -79,7 +81,7 @@ public class MainActivity extends Activity implements OnT9TelephoneDialpadView,
 		}
 		mContactsAdapter = new ContactsAdapter(mContext,
 				R.layout.contacts_list_item, ContactsHelper.getInstance()
-						.getBaseContacts());
+						.getSearchContacts());
 		mContactsLv.setAdapter(mContactsAdapter);
 		mDialInputStr = new StringBuffer(DIAL_INPUT_INIT_CAPACITY);
 	}
@@ -119,12 +121,16 @@ public class MainActivity extends Activity implements OnT9TelephoneDialpadView,
 
 	@Override
 	public void onDialInputTextChanged(String curCharacter) {
-		// Toast.makeText(mContext,
-		// "onDialInputTextChanged"+"("+curCharacter+")",
-		// Toast.LENGTH_SHORT).show();
 		mDialInputStr.delete(0, mDialInputStr.length());
 		mDialInputStr.append(curCharacter);
-
+		
+		if(TextUtils.isEmpty(curCharacter)){
+			ContactsHelper.getInstance().parseT9InputSearchContacts(null);
+		}else{
+			ContactsHelper.getInstance().parseT9InputSearchContacts(curCharacter);
+		}
+		updateContactsList();
+		
 		Toast.makeText(
 				mContext,
 				"onDialInputTextChanged" + "(" + mDialInputStr.toString() + ")",
@@ -134,21 +140,22 @@ public class MainActivity extends Activity implements OnT9TelephoneDialpadView,
 	@Override
 	public void onContactsLoadSuccess() {
 		hideView(mLoadContactsView);
-		showView(mContactsLv);
+		//showView(mContactsLv);
+		updateContactsList();
 		
 		int contactsCount=ContactsHelper.getInstance().getBaseContacts().size();
 		for(int i=0; i<contactsCount; i++){
 			String name=ContactsHelper.getInstance().getBaseContacts().get(i).getName();
-			Log.i(TAG,"iiiiiiiiiiiiiiiiiiiiiiiiiiiname:["+name+"]"+"++++++++++++++++++++++++++++++");
+			Log.i(TAG,"++++++++++++++++++++++++++++++:["+name+"]"+"++++++++++++++++++++++++++++++");
 			List<PinyinUnit> pinyinUnit=ContactsHelper.getInstance().getBaseContacts().get(i).getNamePinyinUnits();
 			int pinyinUnitCount=pinyinUnit.size();
 			for(int j=0; j<pinyinUnitCount; j++){
 				PinyinUnit pyUnit=pinyinUnit.get(j);
-				Log.i(TAG,"jjjjjjjjjjjjjjjjjjjjjjjjj="+j+"isPinyin["+pyUnit.isPinyin()+"]" );
+				Log.i(TAG,"j="+j+",isPinyin["+pyUnit.isPinyin()+"]" );
 				List<String> stringIndex=pyUnit.getStringIndex();
 				int stringIndexLength=stringIndex.size();
 				for(int k=0; k<stringIndexLength; k++){
-					Log.i(TAG,"kkkkkkkkkkkkkkkkkkkkkkkkkkk="+k+"["+stringIndex.get(k)+"]" );
+					Log.i(TAG,"k="+k+"["+stringIndex.get(k)+"]" );
 				}
 				
 			}
@@ -194,4 +201,23 @@ public class MainActivity extends Activity implements OnT9TelephoneDialpadView,
 		}
 	}
 
+	private void updateContactsList(){
+		if(null==mContactsLv){
+			return;
+		}
+		
+		BaseAdapter contactsAdapter=(BaseAdapter) mContactsLv.getAdapter();
+		if(null!=contactsAdapter){
+			contactsAdapter.notifyDataSetChanged();
+			if(contactsAdapter.getCount()>0){
+				showView(mContactsLv);
+				hideView(mSearchResultPromptTv);
+				
+			}else{
+				hideView(mContactsLv);
+				showView(mSearchResultPromptTv);
+				
+			}
+		}
+	}
 }

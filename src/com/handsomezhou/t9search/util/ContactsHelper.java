@@ -8,12 +8,23 @@ import android.database.Cursor;
 import android.os.AsyncTask;
 import android.os.AsyncTask.Status;
 import android.provider.ContactsContract;
+import android.util.Log;
 
 import com.handsomezhou.t9search.model.Contacts;
+import com.handsomezhou.t9search.model.PinyinUnit;
 
 public class ContactsHelper {
+	private static final String TAG="ContactsHelper";
 	private static ContactsHelper mInstance = null;
-	private List<Contacts> mBaseContacts = null;
+	private List<Contacts> mBaseContacts = null;	//The basic data used for the search
+	private List<Contacts> mSearchContacts=null;	//The search results from the basic data
+	/*save the first input string which search no result.
+		mFirstNoSearchResultInput.size<=0, means that the first input string which search no result not appear.
+		mFirstNoSearchResultInput.size>0, means that the first input string which search no result has appeared, 
+		it's  mFirstNoSearchResultInput.toString(). 
+		We can reduce the number of search basic data by the first input string which search no result.
+	*/
+	private StringBuffer  mFirstNoSearchResultInput=null;
 	private AsyncTask<Object, Object, List<Contacts>> mLoadTask = null;
 	private OnContactsLoad mOnContactsLoad = null;
 
@@ -24,11 +35,7 @@ public class ContactsHelper {
 	}
 
 	private ContactsHelper() {
-		if (null == mBaseContacts) {
-			mBaseContacts = new ArrayList<Contacts>();
-		} else {
-			mBaseContacts.clear();
-		}
+		initContactsHelper();
 	}
 
 	public static ContactsHelper getInstance() {
@@ -46,6 +53,14 @@ public class ContactsHelper {
 	// public void setBaseContacts(List<Contacts> baseContacts) {
 	// mBaseContacts = baseContacts;
 	// }
+	
+	public List<Contacts> getSearchContacts() {
+		return mSearchContacts;
+	}
+
+//	public void setSearchContacts(List<Contacts> searchContacts) {
+//		mSearchContacts = searchContacts;
+//	}
 
 	public OnContactsLoad getOnContactsLoad() {
 		return mOnContactsLoad;
@@ -65,11 +80,7 @@ public class ContactsHelper {
 			return false;
 		}
 
-		if (null == mBaseContacts) {
-			mBaseContacts = new ArrayList<Contacts>();
-		} else {
-			mBaseContacts.clear();
-		}
+		initContactsHelper();
 
 		mLoadTask = new AsyncTask<Object, Object, List<Contacts>>() {
 
@@ -80,7 +91,7 @@ public class ContactsHelper {
 
 			@Override
 			protected void onPostExecute(List<Contacts> result) {
-				praseContacts(result);
+				parseContacts(result);
 				super.onPostExecute(result);
 				mLoadTask = null;
 			}
@@ -89,6 +100,94 @@ public class ContactsHelper {
 		return true;
 	}
 
+	
+	/**
+	 * @description search base data according to string parameter
+	 *  search process:
+	 *  1:Search by phone number	('0'~'9','*','#')
+	 *  2:Search by name
+	 *  (1)Search by org name		('0'~'9','*','#')
+	 *  (2)Search by name pinyin characters(org name->name pinyin characters)	('0'~'9')
+	 * @param search (valid characters include:'0'~'9','*','#')
+	 *
+	 * 
+	 */
+	public void parseT9InputSearchContacts(String search){
+		if(null==search){//add all base data to search
+			mSearchContacts.addAll(mBaseContacts);
+			mFirstNoSearchResultInput.delete(0, mFirstNoSearchResultInput.length());
+			Log.i(TAG,"null==search,mFirstNoSearchResultInput.length()="+mFirstNoSearchResultInput.length());
+			return;
+		}
+		
+		if(mFirstNoSearchResultInput.length()>0){
+			if(search.contains(mFirstNoSearchResultInput.toString())){
+				Log.i(TAG,"no need  to search,null!=search,mFirstNoSearchResultInput.length()="+mFirstNoSearchResultInput.length()+"["+mFirstNoSearchResultInput.toString()+"]"+";searchlen="+search.length()+"["+search+"]");
+				return;
+			}else{
+				Log.i(TAG,"delete  mFirstNoSearchResultInput, null!=search,mFirstNoSearchResultInput.length()="+mFirstNoSearchResultInput.length()+"["+mFirstNoSearchResultInput.toString()+"]"+";searchlen="+search.length()+"["+search+"]");
+				mFirstNoSearchResultInput.delete(0, mFirstNoSearchResultInput.length());
+			}
+		}
+		
+		if(null==mSearchContacts){
+			mSearchContacts=new ArrayList<Contacts>();
+		}else{
+			mSearchContacts.clear();	
+		}
+		
+		int contactsCount=mBaseContacts.size();
+		for(int i=0; i<contactsCount; i++){
+			if(mBaseContacts.get(i).getPhoneNumber().contains(search)){	//search by phone number
+				mSearchContacts.add(mBaseContacts.get(i));
+				continue;
+			}else{
+				if(mBaseContacts.get(i).getName().contains(search)){//search by org name;
+					mSearchContacts.add(mBaseContacts.get(i));
+					continue;
+				}else{
+				
+					List<PinyinUnit> pinyinUnits=mBaseContacts.get(i).getNamePinyinUnits();
+					if(true==matchPinyinUnits(pinyinUnits,search)){
+						mSearchContacts.add(mBaseContacts.get(i));
+						continue;
+					}
+				}
+			}
+		}
+		
+		if(mSearchContacts.size()<=0){
+			if(mFirstNoSearchResultInput.length()<=0){
+				mFirstNoSearchResultInput.append(search);
+				Log.i(TAG,"no search result,null!=search,mFirstNoSearchResultInput.length()="+mFirstNoSearchResultInput.length()+"["+mFirstNoSearchResultInput.toString()+"]"+";searchlen="+search.length()+"["+search+"]");
+			}else{
+				
+			}
+		}
+		
+	}
+	
+	
+	private void initContactsHelper(){
+		if (null == mBaseContacts) {
+			mBaseContacts = new ArrayList<Contacts>();
+		} else {
+			mBaseContacts.clear();
+		}
+		
+		if(null==mSearchContacts){
+			mSearchContacts=new ArrayList<Contacts>();
+		}else{
+			mSearchContacts.clear();
+		}
+		
+		if(null==mFirstNoSearchResultInput){
+			mFirstNoSearchResultInput=new StringBuffer();
+		}else{
+			mFirstNoSearchResultInput.delete(0, mFirstNoSearchResultInput.length());
+		}
+	}
+	
 	private boolean isSearching() {
 		return (mLoadTask != null && mLoadTask.getStatus() == Status.RUNNING);
 	}
@@ -137,7 +236,7 @@ public class ContactsHelper {
 		return contacts;
 	}
 
-	private void praseContacts(List<Contacts> contacts) {
+	private void parseContacts(List<Contacts> contacts) {
 		if (null == contacts || contacts.size() < 1) {
 			if (null != mOnContactsLoad) {
 				mOnContactsLoad.onContactsLoadFailed();
@@ -152,10 +251,17 @@ public class ContactsHelper {
 		}
 
 		if (null != mOnContactsLoad) {
+			parseT9InputSearchContacts(null);
 			mOnContactsLoad.onContactsLoadSuccess();
 		}
 
 		return;
 	}
+	
+	private boolean matchPinyinUnits(final List<PinyinUnit> pinyinUnits, String search){
+		
+		return false;
+	}
+	
 
 }
