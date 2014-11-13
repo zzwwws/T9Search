@@ -146,7 +146,6 @@ public class MainActivity extends Activity implements OnT9TelephoneDialpadView,
 	@Override
 	public void onContactsLoadSuccess() {
 		hideView(mLoadContactsView);
-		//showView(mContactsLv);
 		updateContactsList();
 		
 		int contactsCount=ContactsHelper.getInstance().getBaseContacts().size();
@@ -157,7 +156,7 @@ public class MainActivity extends Activity implements OnT9TelephoneDialpadView,
 			int pinyinUnitCount=pinyinUnit.size();
 			for(int j=0; j<pinyinUnitCount; j++){
 				PinyinUnit pyUnit=pinyinUnit.get(j);
-				Log.i(TAG,"j="+j+",isPinyin["+pyUnit.isPinyin()+"]" );
+				Log.i(TAG,"j="+j+",isPinyin["+pyUnit.isPinyin()+"],startPosition=["+pyUnit.getStartPosition()+"]");
 				List<T9PinyinUnit> stringIndex=pyUnit.getT9PinyinUnitIndex();
 				int stringIndexLength=stringIndex.size();
 				for(int k=0; k<stringIndexLength; k++){
@@ -168,7 +167,6 @@ public class MainActivity extends Activity implements OnT9TelephoneDialpadView,
 			
 			
 		}
-		
 	}
 
 	@Override

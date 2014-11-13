@@ -37,6 +37,7 @@ public class PinyinUtil {
 		PinyinUnit pyUnit = null;
 		String[] pinyinStr = null;
 		boolean lastChineseCharacters = true;
+		int startPosition=-1;
 
 		for (int i = 0; i < chineseStringLength; i++) {
 			char ch = chineseString.charAt(i);
@@ -51,6 +52,7 @@ public class PinyinUtil {
 				if (true == lastChineseCharacters) {
 					pyUnit = new PinyinUnit();
 					lastChineseCharacters = false;
+					startPosition=i;
 					nonPinyinString.delete(0, nonPinyinString.length());
 				}
 				nonPinyinString.append(ch);
@@ -58,14 +60,15 @@ public class PinyinUtil {
 				if (false == lastChineseCharacters) {
 					// add continuous non-kanji characters to PinyinUnit
 					String[] str = { nonPinyinString.toString() };
-					addPinyinUnit(pinyinUnit, pyUnit, false, str);
+					addPinyinUnit(pinyinUnit, pyUnit, false, str,startPosition);
 					nonPinyinString.delete(0, nonPinyinString.length());
 					lastChineseCharacters = true;
 				}
 				// add single Chinese characters Pinyin(include Multiple Pinyin)
 				// to PinyinUnit
 				pyUnit = new PinyinUnit();
-				addPinyinUnit(pinyinUnit, pyUnit, true, pinyinStr);
+				startPosition=i;
+				addPinyinUnit(pinyinUnit, pyUnit, true, pinyinStr,startPosition);
 
 			}
 		}
@@ -73,7 +76,7 @@ public class PinyinUtil {
 		if (false == lastChineseCharacters) {
 			// add continuous non-kanji characters to PinyinUnit
 			String[] str = { nonPinyinString.toString() };
-			addPinyinUnit(pinyinUnit, pyUnit, false, str);
+			addPinyinUnit(pinyinUnit, pyUnit, false, str,startPosition);
 			nonPinyinString.delete(0, nonPinyinString.length());
 			lastChineseCharacters = true;
 		}
@@ -81,12 +84,12 @@ public class PinyinUtil {
 	}
 
 	private static void addPinyinUnit(List<PinyinUnit> pinyinUnit,
-			PinyinUnit pyUnit, boolean pinyin, String[] string) {
+			PinyinUnit pyUnit, boolean pinyin, String[] string,int startPosition) {
 		if ((null == pinyinUnit) || (null == pyUnit) || (null == string)) {
 			return;
 		}
 
-		initPinyinUnit(pyUnit, pinyin, string);
+		initPinyinUnit(pyUnit, pinyin, string,startPosition);
 		pinyinUnit.add(pyUnit);
 
 		return;
@@ -94,7 +97,7 @@ public class PinyinUtil {
 	}
 
 	private static void initPinyinUnit(PinyinUnit pinyinUnit, boolean pinyin,
-			String[] string) {
+			String[] string,int startPosition) {
 		if ((null == pinyinUnit) || (null == string)) {
 			return;
 		}
@@ -103,6 +106,7 @@ public class PinyinUtil {
 		int k=0;
 		int strLength = string.length;
 		pinyinUnit.setPinyin(pinyin);
+		pinyinUnit.setStartPosition(startPosition);
 		
 		T9PinyinUnit t9PinyinUnit=null;
 

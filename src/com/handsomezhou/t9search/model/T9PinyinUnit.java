@@ -9,6 +9,7 @@ package com.handsomezhou.t9search.model;
  * @date 2014-11-12
  */
 public class T9PinyinUnit {
+	
 	private String mPinyin;
 	private String mNumber;
 	

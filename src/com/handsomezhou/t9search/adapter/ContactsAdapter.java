@@ -6,6 +6,8 @@ import com.handsomezhou.t9search.R;
 import com.handsomezhou.t9search.model.Contacts;
 
 import android.content.Context;
+import android.text.Html;
+import android.text.Spanned;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -41,9 +43,22 @@ public class ContactsAdapter extends ArrayAdapter<Contacts> {
 			viewHolder=(ViewHolder) view.getTag();
 		}
 		
-		viewHolder.mNameTv.setText(contact.getName());
-		viewHolder.mPhoneNumber.setText(contact.getPhoneNumber());
-		
+		switch (contact.getSearchByType()) {
+		case SearchByNull:
+			showTextNormal(viewHolder.mNameTv, contact.getName());
+			showTextNormal(viewHolder.mPhoneNumber, contact.getPhoneNumber());
+			break;
+		case SearchByPhoneNumber:
+			showTextNormal(viewHolder.mNameTv, contact.getName());
+			showTextHighlight(viewHolder.mPhoneNumber, contact.getPhoneNumber(), contact.getMatchKeywords().toString());
+			break;
+		case SearchByName:
+			showTextHighlight(viewHolder.mNameTv, contact.getName(), contact.getMatchKeywords().toString());
+			showTextNormal(viewHolder.mPhoneNumber, contact.getPhoneNumber());
+			break;
+		default:
+			break;
+		}	
 		return view;
 	}
 	
@@ -51,4 +66,27 @@ public class ContactsAdapter extends ArrayAdapter<Contacts> {
 		TextView mNameTv;
 		TextView mPhoneNumber;
 	}
+	
+	private final void showTextNormal(TextView tv,String text){
+		tv.setText(text);
+	}
+	
+	private void showTextHighlight(TextView tv,String baseText,String highlightText){
+		if((null==tv)||(null==baseText)||(null==highlightText)){
+			return;
+		}
+		
+		int index=baseText.indexOf(highlightText);
+		int len=highlightText.length();
+		/**
+		 *  "<u><font color=#FF0000 >"+str+"</font></u>"; 	//with underline
+		 *  "<font color=#FF0000 >"+str+"</font>";			//without underline
+		 */
+		Spanned spanned=Html.fromHtml(baseText.substring(0, index)+"<font color=#FF0000 >" 
+                + baseText.substring(index, index + len) + "</font>" 
+                + baseText.substring(index + len, baseText.length()));
+		
+		tv.setText(spanned);
+	}
+	
 }
