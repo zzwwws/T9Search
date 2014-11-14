@@ -219,7 +219,7 @@ public class T9TelephoneDialpadView extends LinearLayout implements
 				mOnT9TelephoneDialpadView.onAddDialCharacter(addCharacter);
 			}
 		}
-
+		
 		// Toast.makeText(mContext, "addSingleDialCharacter[" + addCharacter +
 		// "]",
 		// Toast.LENGTH_SHORT).show();
