@@ -4,12 +4,15 @@ import java.util.ArrayList;
 import java.util.List;
 
 import android.content.Context;
+import android.database.ContentObserver;
 import android.database.Cursor;
 import android.os.AsyncTask;
 import android.os.AsyncTask.Status;
+import android.os.Handler;
 import android.provider.ContactsContract;
 import android.util.Log;
 
+import com.handsomezhou.t9search.main.T9SearchApplication;
 import com.handsomezhou.t9search.model.Contacts;
 import com.handsomezhou.t9search.model.Contacts.SearchByType;
 import com.handsomezhou.t9search.model.PinyinUnit;
@@ -17,6 +20,7 @@ import com.handsomezhou.t9search.model.T9PinyinUnit;
 
 public class ContactsHelper {
 	private static final String TAG="ContactsHelper";
+	private Context mContext;
 	private static ContactsHelper mInstance = null;
 	private List<Contacts> mBaseContacts = null;	//The basic data used for the search
 	private List<Contacts> mSearchContacts=null;	//The search results from the basic data
@@ -29,25 +33,41 @@ public class ContactsHelper {
 	private StringBuffer  mFirstNoSearchResultInput=null;
 	private AsyncTask<Object, Object, List<Contacts>> mLoadTask = null;
 	private OnContactsLoad mOnContactsLoad = null;
+	private OnContactsChanged mOnContactsChanged=null;
+	private ContentObserver mContentObserver;
+	private boolean mContactsChanged = true;
+	private Handler mContactsHandler=new Handler();
 
 	public interface OnContactsLoad {
 		void onContactsLoadSuccess();
 
 		void onContactsLoadFailed();
 	}
+	
+	public interface OnContactsChanged{
+		void onContactsChanged();
+	}
 
 	private ContactsHelper() {
 		initContactsHelper();
+		//registerContentObserver();
 	}
 
 	public static ContactsHelper getInstance() {
 		if (null == mInstance) {
 			mInstance = new ContactsHelper();
 		}
-
+		
 		return mInstance;
 	}
 
+	public void destroy(){
+		if(null!=mInstance){
+			//unregisterContentObserver();
+			mInstance=null;//the system will free other memory. 
+		}
+	}
+	
 	public List<Contacts> getBaseContacts() {
 		return mBaseContacts;
 	}
@@ -72,29 +92,43 @@ public class ContactsHelper {
 		mOnContactsLoad = onContactsLoad;
 	}
 
+	
+	private boolean isContactsChanged() {
+		return mContactsChanged;
+	}
+
+	private void setContactsChanged(boolean contactsChanged) {
+		mContactsChanged = contactsChanged;
+	}
+
 	/**
 	 * Provides an function to start load contacts
 	 * 
 	 * @return start load success return true, otherwise return false
 	 */
-	public boolean startLoadContacts(final Context context) {
+	public boolean startLoadContacts() {
 		if (true == isSearching()) {
 			return false;
 		}
-
+		
+		if(false==isContactsChanged()){
+			return false;
+		}
+		
 		initContactsHelper();
 
 		mLoadTask = new AsyncTask<Object, Object, List<Contacts>>() {
 
 			@Override
 			protected List<Contacts> doInBackground(Object... params) {
-				return loadContacts(context);
+				return loadContacts(mContext);
 			}
 
 			@Override
 			protected void onPostExecute(List<Contacts> result) {
 				parseContacts(result);
 				super.onPostExecute(result);
+				setContactsChanged(false);
 				mLoadTask = null;
 			}
 		}.execute();
@@ -111,6 +145,7 @@ public class ContactsHelper {
 	 *  (1)Search by org name		('0'~'9','*','#')
 	 *  (2)Search by name pinyin characters(org name->name pinyin characters)	('0'~'9')
 	 * @param search (valid characters include:'0'~'9','*','#')
+	 * @return void
 	 *
 	 * 
 	 */
@@ -151,42 +186,15 @@ public class ContactsHelper {
 		
 		int contactsCount=mBaseContacts.size();
 		
-/*		for(int i=0; i<contactsCount; i++){
-			if(mBaseContacts.get(i).getPhoneNumber().startsWith(search)){	//contains(search)search by phone number
-				mBaseContacts.get(i).setSearchByType(SearchByType.SearchByPhoneNumber);
-				mBaseContacts.get(i).setMatchKeywords(search);
-				mSearchContacts.add(mBaseContacts.get(i));
-				continue;
-			}else{
-				if(mBaseContacts.get(i).getName().contains(search)){//search by org name;
-					mBaseContacts.get(i).setSearchByType(SearchByType.SearchByName);
-					mBaseContacts.get(i).setMatchKeywords(search);
-					mSearchContacts.add(mBaseContacts.get(i));
-					continue;
-				}else{
-				
-					List<PinyinUnit> pinyinUnits=mBaseContacts.get(i).getNamePinyinUnits();
-					StringBuffer chineseKeyWords=new StringBuffer();//In order to get Chinese KeyWords.Of course it's maybe not Chinese characters.
-					String name=mBaseContacts.get(i).getName();
-					if(true==matchPinyinUnits(pinyinUnits,name,search,chineseKeyWords)){//search by NamePinyinUnits;
-						mBaseContacts.get(i).setSearchByType(SearchByType.SearchByName);
-						mBaseContacts.get(i).setMatchKeywords(chineseKeyWords.toString());
-						chineseKeyWords.delete(0, chineseKeyWords.length());
-						mSearchContacts.add(mBaseContacts.get(i));
-						continue;
-					}
-				}
-			}
-		}*/
 		for(int i=0; i<contactsCount; i++){
 			
 			List<PinyinUnit> pinyinUnits=mBaseContacts.get(i).getNamePinyinUnits();
-			StringBuffer chineseKeyWords=new StringBuffer();//In order to get Chinese KeyWords.Of course it's maybe not Chinese characters.
+			StringBuffer chineseKeyWord=new StringBuffer();//In order to get Chinese KeyWords.Of course it's maybe not Chinese characters.
 			String name=mBaseContacts.get(i).getName();
-			if(true==matchPinyinUnits(pinyinUnits,name,search,chineseKeyWords)){//search by NamePinyinUnits;
+			if(true==matchPinyinUnits(pinyinUnits,name,search,chineseKeyWord)){//search by NamePinyinUnits;
 				mBaseContacts.get(i).setSearchByType(SearchByType.SearchByName);
-				mBaseContacts.get(i).setMatchKeywords(chineseKeyWords.toString());
-				chineseKeyWords.delete(0, chineseKeyWords.length());
+				mBaseContacts.get(i).setMatchKeywords(chineseKeyWord.toString());
+				chineseKeyWord.delete(0, chineseKeyWord.length());
 				mSearchContacts.add(mBaseContacts.get(i));
 				continue;
 			}else{
@@ -219,6 +227,8 @@ public class ContactsHelper {
 	
 	
 	private void initContactsHelper(){
+		mContext=T9SearchApplication.getContextObject();
+		setContactsChanged(true);
 		if (null == mBaseContacts) {
 			mBaseContacts = new ArrayList<Contacts>();
 		} else {
@@ -235,6 +245,38 @@ public class ContactsHelper {
 			mFirstNoSearchResultInput=new StringBuffer();
 		}else{
 			mFirstNoSearchResultInput.delete(0, mFirstNoSearchResultInput.length());
+		}
+	}
+	
+	private void registerContentObserver(){
+		if(null==mContentObserver){
+			mContentObserver=new ContentObserver(mContactsHandler) {
+
+				@Override
+				public void onChange(boolean selfChange) {
+					// TODO Auto-generated method stub
+					setContactsChanged(true);
+					if(null!=mOnContactsChanged){
+						Log.i("ActivityTest","mOnContactsChanged mContactsChanged="+mContactsChanged);
+						mOnContactsChanged.onContactsChanged();
+					}
+					super.onChange(selfChange);
+				}
+				
+			};
+		}
+		
+		if(null!=mContext){
+			mContext.getContentResolver().registerContentObserver(ContactsContract.CommonDataKinds.Phone.CONTENT_URI, true,
+					mContentObserver);
+		}
+	}
+	
+	private void unregisterContentObserver(){
+		if(null!=mContentObserver){
+			if(null!=mContext){
+				mContext.getContentResolver().unregisterContentObserver(mContentObserver);
+			}
 		}
 	}
 	
@@ -310,20 +352,21 @@ public class ContactsHelper {
 	}
 	
 	/**
-	 * @description
+	 * @description match Pinyin Units
 	 * @param pinyinUnits		
 	 * @param baseData   		the original string which be parsed to PinyinUnit
 	 * @param search			search key words('0'~'9')
-	 * @param chineseKeyWords	the sub string of base data
-	 * @return
+	 * @param chineseKeyWord	the sub string of base data
+	 * @return true if match success,false otherwise. 
 	 */
-	private boolean matchPinyinUnits(final List<PinyinUnit> pinyinUnits,final String baseData, String search,StringBuffer chineseKeyWords){
-		if((null==pinyinUnits)||(null==search)||(null==chineseKeyWords)){
+	private boolean matchPinyinUnits(final List<PinyinUnit> pinyinUnits,final String baseData, String search,StringBuffer chineseKeyWord){
+		if((null==pinyinUnits)||(null==search)||(null==chineseKeyWord)){
 			return false;
 		}
+		
 		StringBuffer matchSearch=new StringBuffer();
 		matchSearch.delete(0, matchSearch.length());
-		chineseKeyWords.delete(0, chineseKeyWords.length());
+		chineseKeyWord.delete(0, chineseKeyWord.length());
 		PinyinUnit pyUnit=null;
 		
 		int pinyinUnitsLength=pinyinUnits.size();
@@ -335,8 +378,8 @@ public class ContactsHelper {
 				T9PinyinUnit t9PinyinUnit=pyUnit.getT9PinyinUnitIndex().get(j);
 				if(pyUnit.isPinyin()){
 					if(t9PinyinUnit.getNumber().startsWith(search)){
-						chineseKeyWords.delete(0, chineseKeyWords.length());
-						chineseKeyWords.append(baseData.charAt(pinyinUnits.get(i).getStartPosition()));
+						chineseKeyWord.delete(0, chineseKeyWord.length());
+						chineseKeyWord.append(baseData.charAt(pinyinUnits.get(i).getStartPosition()));
 						return true;
 					}
 				}else{
@@ -346,18 +389,18 @@ public class ContactsHelper {
 					int index=t9PinyinUnit.getNumber().indexOf(search);
 					if(index>=0){
 						Log.i(TAG,"t9PinyinUnit.getNumber()=["+t9PinyinUnit.getNumber()+"]  search=["+search+"]"+"index=["+index+"]t9PinyinUnit.getPinyin()=["+t9PinyinUnit.getPinyin()+"]" );
-						chineseKeyWords.delete(0, chineseKeyWords.length());
+						chineseKeyWord.delete(0, chineseKeyWord.length());
 						String keyWords=t9PinyinUnit.getPinyin().substring(index, index+search.length());
 						
 						Log.i(TAG,"t9PinyinUnit.getNumber()=["+t9PinyinUnit.getNumber()+"]  search=["+search+"]"+"index=["+index+"]t9PinyinUnit.getPinyin()=["+t9PinyinUnit.getPinyin()+"]"+"keyWords=["+keyWords+"]" );
-						chineseKeyWords.append(keyWords);
+						chineseKeyWord.append(keyWords);
 						return true;
 					}
 					/**
 					 * match from start position
 					if(t9PinyinUnit.getNumber().startsWith(search)){
 						String keyWords=baseData.substring(0, search.length());
-						chineseKeyWords.append(keyWords);
+						chineseKeyWord.append(keyWords);
 					}
 					*/
 				}
@@ -370,10 +413,10 @@ public class ContactsHelper {
 		for(int i=0; i<pinyinUnitsLength; i++){
 			pyUnit=pinyinUnits.get(i);
 			for(int j=0; j<pyUnit.getT9PinyinUnitIndex().size(); j++){
-				chineseKeyWords.delete(0, chineseKeyWords.length());
+				chineseKeyWord.delete(0, chineseKeyWord.length());
 				searchBuffer.delete(0, searchBuffer.length());
 				searchBuffer.append(search);
-				boolean found=findPinyinUnits(pinyinUnits, i, j, baseData, searchBuffer, chineseKeyWords);
+				boolean found=findPinyinUnits(pinyinUnits, i, j, baseData, searchBuffer, chineseKeyWord);
 				if(true==found){
 					return true;
 				}
@@ -385,8 +428,17 @@ public class ContactsHelper {
 		return false;
 	}
 	
-	private boolean findPinyinUnits(final List<PinyinUnit> pinyinUnits,int pinyinUnitIndex,int t9PinyinUnitIndex,final String baseData, StringBuffer searchBuffer,StringBuffer chineseKeyWords ){
-		if((null==pinyinUnits)||(null==baseData)||(null==searchBuffer)||(null==chineseKeyWords)){
+	/**
+	 * @param pinyinUnits		pinyinUnits head node index
+	 * @param pinyinUnitIndex   pinyinUint Index
+	 * @param t9PinyinUnitIndex t9PinyinUnit Index 
+	 * @param baseData			base data for search.
+	 * @param searchBuffer		search keyword.
+	 * @param chineseKeyWord	save the Chinese keyword.
+	 * @return true if find,false otherwise.
+	 */
+	private boolean findPinyinUnits(final List<PinyinUnit> pinyinUnits,int pinyinUnitIndex,int t9PinyinUnitIndex,final String baseData, StringBuffer searchBuffer,StringBuffer chineseKeyWord ){
+		if((null==pinyinUnits)||(null==baseData)||(null==searchBuffer)||(null==chineseKeyWord)){
 			return false;
 		}
 		
@@ -412,36 +464,36 @@ public class ContactsHelper {
 			
 			if(search.startsWith(String.valueOf(t9PinyinUnit.getNumber().charAt(0)))){// match pinyin first character
 				searchBuffer.delete(0,1);//delete the match character
-				chineseKeyWords.append(baseData.charAt(pyUnit.getStartPosition()));
-				boolean found=findPinyinUnits(pinyinUnits, pinyinUnitIndex+1, 0, baseData, searchBuffer, chineseKeyWords);
+				chineseKeyWord.append(baseData.charAt(pyUnit.getStartPosition()));
+				boolean found=findPinyinUnits(pinyinUnits, pinyinUnitIndex+1, 0, baseData, searchBuffer, chineseKeyWord);
 				if(true==found){
 					return true; 
 				}else{
 					searchBuffer.insert(0, t9PinyinUnit.getNumber().charAt(0));
-					chineseKeyWords.deleteCharAt(chineseKeyWords.length()-1);
+					chineseKeyWord.deleteCharAt(chineseKeyWord.length()-1);
 				}
 				
 			}
 			
 			if(t9PinyinUnit.getNumber().startsWith(search)){
 				//The string of "search" is the string of t9PinyinUnit.getNumber() of a subset. means match success.
-				chineseKeyWords.append(baseData.charAt(pyUnit.getStartPosition()));
+				chineseKeyWord.append(baseData.charAt(pyUnit.getStartPosition()));
 				searchBuffer.delete(0, searchBuffer.length());	
 				return true;
 				
 			}else if(search.startsWith(t9PinyinUnit.getNumber())){ //match quanpin  success
 				//The string of t9PinyinUnit.getNumber() is the string of "search" of a subset.
 				searchBuffer.delete(0, t9PinyinUnit.getNumber().length());
-				chineseKeyWords.append(baseData.charAt(pyUnit.getStartPosition()));
-				boolean found=findPinyinUnits(pinyinUnits, pinyinUnitIndex+1, 0, baseData, searchBuffer, chineseKeyWords);
+				chineseKeyWord.append(baseData.charAt(pyUnit.getStartPosition()));
+				boolean found=findPinyinUnits(pinyinUnits, pinyinUnitIndex+1, 0, baseData, searchBuffer, chineseKeyWord);
 				if(true==found){
 					return true;
 				}else{
 					searchBuffer.insert(0, t9PinyinUnit.getNumber());
-					chineseKeyWords.deleteCharAt(chineseKeyWords.length()-1);
+					chineseKeyWord.deleteCharAt(chineseKeyWord.length()-1);
 				}
 			}else{ //mismatch
-				boolean found=findPinyinUnits(pinyinUnits, pinyinUnitIndex, t9PinyinUnitIndex+1, baseData, searchBuffer, chineseKeyWords);
+				boolean found=findPinyinUnits(pinyinUnits, pinyinUnitIndex, t9PinyinUnitIndex+1, baseData, searchBuffer, chineseKeyWord);
 				if(found==true){
 					return true;
 				}
@@ -451,23 +503,23 @@ public class ContactsHelper {
 			
 			if(t9PinyinUnit.getNumber().startsWith(search)){
 				//The string of "search" is the string of t9PinyinUnit.getNumber() of a subset.
-				chineseKeyWords.append(baseData.substring(pyUnit.getStartPosition(),pyUnit.getStartPosition()+ search.length()));
+				chineseKeyWord.append(baseData.substring(pyUnit.getStartPosition(),pyUnit.getStartPosition()+ search.length()));
 				searchBuffer.delete(0, searchBuffer.length());
 				return true;
 			}else if(search.startsWith(t9PinyinUnit.getNumber())){ //match all non-pure pinyin 
 				//The string of t9PinyinUnit.getNumber() is the string of "search" of a subset.
 				searchBuffer.delete(0, t9PinyinUnit.getNumber().length());
-				chineseKeyWords.append(baseData.substring(pyUnit.getStartPosition(),pyUnit.getStartPosition()+ t9PinyinUnit.getNumber().length()));
-				boolean found=findPinyinUnits(pinyinUnits, pinyinUnitIndex+1, 0, baseData, searchBuffer, chineseKeyWords);
+				chineseKeyWord.append(baseData.substring(pyUnit.getStartPosition(),pyUnit.getStartPosition()+ t9PinyinUnit.getNumber().length()));
+				boolean found=findPinyinUnits(pinyinUnits, pinyinUnitIndex+1, 0, baseData, searchBuffer, chineseKeyWord);
 				if(true==found){
 					return true;
 				}else{
 					searchBuffer.insert(0, t9PinyinUnit.getNumber());
-					chineseKeyWords.delete(chineseKeyWords.length()-t9PinyinUnit.getNumber().length(), chineseKeyWords.length());
+					chineseKeyWord.delete(chineseKeyWord.length()-t9PinyinUnit.getNumber().length(), chineseKeyWord.length());
 				}
-			}//else if((chineseKeyWords.length()<=0)){}
+			}//else if((chineseKeyWord.length()<=0)){}
 			else { //mismatch
-				boolean found=findPinyinUnits(pinyinUnits, pinyinUnitIndex, t9PinyinUnitIndex+1, baseData, searchBuffer, chineseKeyWords);
+				boolean found=findPinyinUnits(pinyinUnits, pinyinUnitIndex, t9PinyinUnitIndex+1, baseData, searchBuffer, chineseKeyWord);
 				if(found==true){
 					return true;
 				}

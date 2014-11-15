@@ -26,7 +26,7 @@
             android:layout_margin="4dp"
             android:layout_weight="2"
             android:background="@drawable/dial_digitbar_input_bg"
-            android:hint="@string/input_phone_number"
+            android:hint="@string/t9_keyboard_input_prompt"
             android:inputType="phone"
             android:padding="4dp" />
 

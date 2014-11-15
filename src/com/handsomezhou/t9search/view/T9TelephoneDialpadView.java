@@ -33,6 +33,8 @@ public class T9TelephoneDialpadView extends LinearLayout implements
 		void onDeleteDialCharacter(String deleteCharacter);
 
 		void onDialInputTextChanged(String curCharacter);
+		
+		void onHideT9TelephoneDialpadView();
 	}
 
 	private Context mContext;
@@ -44,7 +46,7 @@ public class T9TelephoneDialpadView extends LinearLayout implements
 								// of children
 	private Button mTelephoneDialCloseBtn;
 	private Button mDialDeleteBtn;
-	private EditText mDialInputEt;
+	private EditText mT9InputEt;
 	private OnT9TelephoneDialpadView mOnT9TelephoneDialpadView = null;
 
 	public T9TelephoneDialpadView(Context context, AttributeSet attrs) {
@@ -70,7 +72,7 @@ public class T9TelephoneDialpadView extends LinearLayout implements
 				.findViewById(R.id.telephone_dial_close_btn);
 		mDialDeleteBtn = (Button) mDialpadView
 				.findViewById(R.id.dial_delete_btn);
-		mDialInputEt = (EditText) mDialpadView
+		mT9InputEt = (EditText) mDialpadView
 				.findViewById(R.id.dial_input_edit_text);
 
 	}
@@ -95,7 +97,7 @@ public class T9TelephoneDialpadView extends LinearLayout implements
 			v.setOnClickListener(this);
 		}
 
-		mDialInputEt.addTextChangedListener(new TextWatcher() {
+		mT9InputEt.addTextChangedListener(new TextWatcher() {
 
 			@Override
 			public void onTextChanged(CharSequence s, int start, int before,
@@ -116,7 +118,7 @@ public class T9TelephoneDialpadView extends LinearLayout implements
 				if (null != mOnT9TelephoneDialpadView) {
 					mOnT9TelephoneDialpadView.onDialInputTextChanged(s
 							.toString());
-					mDialInputEt.setSelection(s.toString().length());
+					mT9InputEt.setSelection(s.toString().length());
 					// Toast.makeText(mContext,
 					// "onDialInputTextChanged[" + s.toString() + "]",
 					// Toast.LENGTH_SHORT).show();
@@ -124,7 +126,7 @@ public class T9TelephoneDialpadView extends LinearLayout implements
 			}
 		});
 
-		mDialInputEt.setOnTouchListener(new OnTouchListener() {
+		mT9InputEt.setOnTouchListener(new OnTouchListener() {
 
 			@SuppressLint("ClickableViewAccessibility")
 			@Override
@@ -141,6 +143,9 @@ public class T9TelephoneDialpadView extends LinearLayout implements
 		switch (v.getId()) {
 		case R.id.telephone_dial_close_btn:
 			hideT9TelephoneDialpadView();
+			if(null!=mOnT9TelephoneDialpadView){
+				mOnT9TelephoneDialpadView.onHideT9TelephoneDialpadView();
+			}
 			break;
 		case R.id.dial_delete_btn:
 			deleteSingleDialCharacter();
@@ -179,7 +184,7 @@ public class T9TelephoneDialpadView extends LinearLayout implements
 	}
 
 	private void deleteSingleDialCharacter() {
-		String curInputStr = mDialInputEt.getText().toString();
+		String curInputStr = mT9InputEt.getText().toString();
 		if (curInputStr.length() > 0) {
 			String deleteCharacter = curInputStr.substring(
 					curInputStr.length() - 1, curInputStr.length());
@@ -188,17 +193,14 @@ public class T9TelephoneDialpadView extends LinearLayout implements
 						.onDeleteDialCharacter(deleteCharacter);
 			}
 
-			mDialInputEt.setText(curInputStr.substring(0,
+			mT9InputEt.setText(curInputStr.substring(0,
 					curInputStr.length() - 1));
-			mDialInputEt.setSelection(mDialInputEt.getText().length());
-			// Toast.makeText(mContext, "deleteSingleDialCharacter[" +
-			// deleteCharacter + "]",
-			// Toast.LENGTH_SHORT).show();
+			mT9InputEt.setSelection(mT9InputEt.getText().length());
 		}
 	}
 
 	private void deleteAllDialCharacter() {
-		String curInputStr = mDialInputEt.getText().toString();
+		String curInputStr = mT9InputEt.getText().toString();
 		if (curInputStr.length() > 0) {
 			String deleteCharacter = curInputStr.substring(0,
 					curInputStr.length());
@@ -206,15 +208,15 @@ public class T9TelephoneDialpadView extends LinearLayout implements
 				mOnT9TelephoneDialpadView
 						.onDeleteDialCharacter(deleteCharacter);
 			}
-			mDialInputEt.setText("");
+			mT9InputEt.setText("");
 		}
 	}
 
 	private void addSingleDialCharacter(String addCharacter) {
-		String preInputStr = mDialInputEt.getText().toString();
+		String preInputStr = mT9InputEt.getText().toString();
 		if (!TextUtils.isEmpty(addCharacter)) {
-			mDialInputEt.setText(preInputStr + addCharacter);
-			mDialInputEt.setSelection(mDialInputEt.getText().length());
+			mT9InputEt.setText(preInputStr + addCharacter);
+			mT9InputEt.setSelection(mT9InputEt.getText().length());
 			if (null != mOnT9TelephoneDialpadView) {
 				mOnT9TelephoneDialpadView.onAddDialCharacter(addCharacter);
 			}
@@ -247,4 +249,12 @@ public class T9TelephoneDialpadView extends LinearLayout implements
 	 * this.setVisibility(View.VISIBLE); break; default:
 	 * this.setVisibility(View.VISIBLE); break; } }
 	 */
+	
+	public String getT9Input(){
+		return mT9InputEt.getText().toString();
+	}
+	
+	public void  clearT9Input(){
+		mT9InputEt.setText("");
+	}
 }

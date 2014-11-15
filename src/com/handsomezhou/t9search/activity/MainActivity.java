@@ -12,7 +12,6 @@ import android.widget.BaseAdapter;
 import android.widget.Button;
 import android.widget.ListView;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.handsomezhou.t9search.R;
 import com.handsomezhou.t9search.adapter.ContactsAdapter;
@@ -29,7 +28,7 @@ import com.handsomezhou.t9search.view.T9TelephoneDialpadView.OnT9TelephoneDialpa
  * @date 2014.11.09
  */
 public class MainActivity extends Activity implements OnT9TelephoneDialpadView,
-		OnContactsLoad {
+		OnContactsLoad{
 	private static final String TAG = "MainActivity";
 	private static final int DIAL_INPUT_INIT_CAPACITY = 128;
 	private Context mContext;
@@ -80,8 +79,7 @@ public class MainActivity extends Activity implements OnT9TelephoneDialpadView,
 
 	private void initData() {
 		ContactsHelper.getInstance().setOnContactsLoad(this);
-		boolean startLoad = ContactsHelper.getInstance().startLoadContacts(
-				mContext);
+		boolean startLoad = ContactsHelper.getInstance().startLoadContacts();
 		if (true == startLoad) {
 			showView(mLoadContactsView);
 		}
@@ -114,15 +112,12 @@ public class MainActivity extends Activity implements OnT9TelephoneDialpadView,
 
 	@Override
 	public void onAddDialCharacter(String addCharacter) {
-		// Toast.makeText(mContext, "onAddDialCharacter"+"("+addCharacter+")",
-		// Toast.LENGTH_SHORT).show();
+		// TODO Auto-generated method stub
 	}
 
 	@Override
 	public void onDeleteDialCharacter(String deleteCharacter) {
-		// Toast.makeText(mContext,
-		// "onDeleteDialCharacter"+"("+deleteCharacter+")",
-		// Toast.LENGTH_SHORT).show();
+		// TODO Auto-generated method stub
 	}
 
 	@Override
@@ -136,13 +131,14 @@ public class MainActivity extends Activity implements OnT9TelephoneDialpadView,
 			ContactsHelper.getInstance().parseT9InputSearchContacts(curCharacter);
 		}
 		updateContactsList();
-		
-		Toast.makeText(
-				mContext,
-				"onDialInputTextChanged" + "(" + mDialInputStr.toString() + ")",
-				Toast.LENGTH_SHORT).show();
 	}
 
+	@Override
+	public void onHideT9TelephoneDialpadView() {
+		// TODO Auto-generated method stub
+		
+	}
+	
 	@Override
 	public void onContactsLoadSuccess() {
 		hideView(mLoadContactsView);
@@ -224,4 +220,5 @@ public class MainActivity extends Activity implements OnT9TelephoneDialpadView,
 			}
 		}
 	}
+
 }

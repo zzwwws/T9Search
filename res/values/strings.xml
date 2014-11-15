@@ -3,8 +3,8 @@
     <string name="app_name">T9Search</string>
     <string name="display_keyboard">显示键盘</string>
     <string name="hide_keyboard">隐藏键盘</string>
-    <string name="input_phone_number">请输入电话号码</string>
+    <string name="t9_keyboard_input_prompt">输入号码或拼音</string>
     <string name="no_match_search_result">无相关搜索结果</string>
-    <string name="loading_contacts">正在加载联系人...</string>
+    <string name="loading_contacts">正在加载联系人</string>
 
 </resources>
