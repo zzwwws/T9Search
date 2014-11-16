@@ -4,17 +4,23 @@ import java.util.List;
 
 import android.app.Activity;
 import android.content.Context;
+import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.View;
+import android.widget.AdapterView;
+import android.widget.AdapterView.OnItemClickListener;
 import android.widget.BaseAdapter;
 import android.widget.Button;
 import android.widget.ListView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.handsomezhou.t9search.R;
 import com.handsomezhou.t9search.adapter.ContactsAdapter;
+import com.handsomezhou.t9search.model.Contacts;
 import com.handsomezhou.t9search.model.PinyinUnit;
 import com.handsomezhou.t9search.model.T9PinyinUnit;
 import com.handsomezhou.t9search.util.ContactsHelper;
@@ -58,7 +64,8 @@ public class MainActivity extends Activity implements OnT9TelephoneDialpadView,
 
 	@Override
 	public void onBackPressed() {
-		moveTaskToBack(true);
+		super.onBackPressed();
+		//moveTaskToBack(true);
 	}
 	
 	private void initView() {
@@ -96,6 +103,20 @@ public class MainActivity extends Activity implements OnT9TelephoneDialpadView,
 			@Override
 			public void onClick(View v) {
 				clickDialpad();
+			}
+		});
+		
+		mContactsLv.setOnItemClickListener(new OnItemClickListener() {
+
+			@Override
+			public void onItemClick(AdapterView<?> parent, View view,
+					int position, long id) {
+				Contacts contacts=ContactsHelper.getInstance().getSearchContacts().get(position);
+				 String uri = "tel:" + contacts.getPhoneNumber() ;
+				 Intent intent = new Intent(Intent.ACTION_DIAL,Uri.parse(uri));
+				// intent.setData(Uri.parse(uri));
+				 startActivity(intent);
+				
 			}
 		});
 	}
