@@ -139,11 +139,6 @@ public class ContactsHelper {
 	
 	/**
 	 * @description search base data according to string parameter
-	 *  search process:
-	 *  1:Search by phone number	('0'~'9','*','#')
-	 *  2:Search by name
-	 *  (1)Search by org name		('0'~'9','*','#')
-	 *  (2)Search by name pinyin characters(org name->name pinyin characters)	('0'~'9')
 	 * @param search (valid characters include:'0'~'9','*','#')
 	 * @return void
 	 *
@@ -186,6 +181,13 @@ public class ContactsHelper {
 		
 		int contactsCount=mBaseContacts.size();
 		
+		/**
+		 * search process:
+		 * 1:Search by name
+		 *  (1)Search by name pinyin characters(org name->name pinyin characters)	('0'~'9','*','#')
+		 *  (2)Search by org name		('0'~'9','*','#')
+		 * 2:Search by phone number		('0'~'9','*','#')
+		 */
 		for(int i=0; i<contactsCount; i++){
 			
 			List<PinyinUnit> pinyinUnits=mBaseContacts.get(i).getNamePinyinUnits();
@@ -355,7 +357,7 @@ public class ContactsHelper {
 	 * @description match Pinyin Units
 	 * @param pinyinUnits		
 	 * @param baseData   		the original string which be parsed to PinyinUnit
-	 * @param search			search key words('0'~'9')
+	 * @param search			search key words
 	 * @param chineseKeyWord	the sub string of base data
 	 * @return true if match success,false otherwise. 
 	 */
