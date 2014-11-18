@@ -362,21 +362,19 @@ public class ContactsHelper {
 		StringBuffer matchSearch=new StringBuffer();
 		matchSearch.delete(0, matchSearch.length());
 		chineseKeyWord.delete(0, chineseKeyWord.length());
-		PinyinUnit pyUnit=null;
-		
+
 		int pinyinUnitsLength=0;
 		pinyinUnitsLength=pinyinUnits.size();
 		StringBuffer searchBuffer=new StringBuffer();
 		for(int i=0; i<pinyinUnitsLength; i++){
-			pyUnit=pinyinUnits.get(i);
-			for(int j=0; j<pyUnit.getT9PinyinUnitIndex().size(); j++){
-				chineseKeyWord.delete(0, chineseKeyWord.length());
-				searchBuffer.delete(0, searchBuffer.length());
-				searchBuffer.append(search);
-				boolean found=findPinyinUnits(pinyinUnits, i, j, baseData, searchBuffer, chineseKeyWord);
-				if(true==found){
-					return true;
-				}
+			int j=0;
+			chineseKeyWord.delete(0, chineseKeyWord.length());
+			searchBuffer.delete(0, searchBuffer.length());
+			searchBuffer.append(search);
+			boolean found = findPinyinUnits(pinyinUnits, i, j, baseData,
+					searchBuffer, chineseKeyWord);
+			if (true == found) {
+				return true;
 			}
 		}
 					
@@ -384,6 +382,7 @@ public class ContactsHelper {
 	}
 	
 	/**
+	 * @description match search string with pinyinUnits,if success,save the Chinese keywords.
 	 * @param pinyinUnits		pinyinUnits head node index
 	 * @param pinyinUnitIndex   pinyinUint Index
 	 * @param t9PinyinUnitIndex t9PinyinUnit Index 
@@ -412,9 +411,6 @@ public class ContactsHelper {
 		}
 		
 		T9PinyinUnit t9PinyinUnit=pyUnit.getT9PinyinUnitIndex().get(t9PinyinUnitIndex);
-		
-		
-		
 		if(pyUnit.isPinyin()){
 			
 			if(search.startsWith(String.valueOf(t9PinyinUnit.getNumber().charAt(0)))){// match pinyin first character
@@ -504,14 +500,14 @@ public class ContactsHelper {
 					
 					//in fact,if pyUnit.isPinyin()==false, pyUnit.getT9PinyinUnitIndex().size()==1. The function of findPinyinUnits() will return false.
 					boolean found=findPinyinUnits(pinyinUnits, pinyinUnitIndex, t9PinyinUnitIndex+1, baseData, searchBuffer, chineseKeyWord);
-					if(found==true){
+					if(true==found){
 						return true;
 					}
 				}
 			}else { //mismatch
 				//in fact,if pyUnit.isPinyin()==false, pyUnit.getT9PinyinUnitIndex().size()==1.  The function of findPinyinUnits() will return false.
 				boolean found=findPinyinUnits(pinyinUnits, pinyinUnitIndex, t9PinyinUnitIndex+1, baseData, searchBuffer, chineseKeyWord);
-				if(found==true){
+				if(true==found){
 					return true;
 				}
 			}
